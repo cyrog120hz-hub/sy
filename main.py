@@ -181,41 +181,6 @@ except Exception:
 # 強制設定使用系統縮放，避免進入 Per-Monitor V2 模式
 os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 os.environ["QT_FONT_DPI"] = "96"
-# ===
-def check_cloud_update():
-    """
-    連線至 GitHub API 檢查是否有比本地版本更新的 Tag
-    """
-    #  GitHub 資訊
-    OWNER = "cyrog120hz-hub"
-    REPO = "cyROG_python"
-    CURRENT_VERSION = "v7.5.0" # 本地版本號
-    
-    API_URL = f"https://api.github.com/repos/{OWNER}/{REPO}/releases/latest"
-    
-    try:
-        # 使用 requests 抓取最新的 Release 資訊
-        response = requests.get(API_URL, timeout=5)
-        
-        # 檢查是否成功抓取 (200 代表 OK)
-        if response.status_code == 200:
-            data = response.json()
-            latest_version = data.get("tag_name")
-            
-            # 比對版本號是否不一致
-            if latest_version and latest_version != CURRENT_VERSION:
-                assets = data.get('assets', [])
-                if assets:
-                    # 抓取第一個附件檔案 (ui.exe) 的下載網址
-                    download_url = assets[0]['browser_download_url']
-                    return latest_version, download_url
-        else:
-            print(f"API 請求失敗，狀態碼：{response.status_code}")
-            
-    except Exception as e:
-        print(f"雲更新檢查出錯: {e}")
-        
-    return None, None
 
 # --- 1. 透明 ESP  ---
 class ESPOverlay(QWidget):
@@ -352,7 +317,7 @@ class ESPOverlay(QWidget):
                 painter.drawPolygon(diamond)
 
         # --- 显示 CAESAR UI - 悬浮在视窗顶端的红色文字 ---
-        if self.esp_config.get('caesar', True):  # 默认启用
+        if self.esp_config.get('XUANS', True):  # 默认启用
             painter.setPen(QPen(QColor(255, 0, 0, 255), 2))  # 红色画笔
             font = painter.font()
             font.setPointSize(20)  # 大字体
@@ -360,8 +325,8 @@ class ESPOverlay(QWidget):
             font.setItalic(True)  # 微斜体
             painter.setFont(font)
             
-            # 在视窗顶端中央绘制"CAESAR"文字
-            text = "CAESAR"
+            # 在视窗顶端中央绘制"XUANS"文字
+            text = "XUANS"  # 替换为你想显示的文字
             text_rect = painter.fontMetrics().boundingRect(text)
             text_x = (self.width() - text_rect.width()) // 2  # 水平居中
             text_y = 80  # 距离顶端80px（增加间距）
@@ -2105,14 +2070,14 @@ class ModernModMenu(QWidget):
         self.content_hlayout = QHBoxLayout(self.container)
 
         self.side_bar = QVBoxLayout()
-        self.logo = QLabel("TRACK BETA//v2.0.75"); self.logo.setObjectName("LogoLabel"); self.logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.logo = QLabel("XUANS"); self.logo.setObjectName("LogoLabel"); self.logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.side_bar.addWidget(self.logo)
 
         self.nav_buttons = []
         # ⭐ 菜单图标定义
-        self.menu_icons = ["📊", "📢", "👤", "👁️", "🎯", "💾", "🚀", "⚡", "🎵", "⚙️", "ℹ️"]
-        self.menu_shortcuts = ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11"]
-        self.menus = ["系統狀況", "系统公告","帳號", "视觉辅助", "自动瞄准", "內存功能", "移動", "內核優化", "音樂中心", "设置中心", "关于我们"]
+        self.menu_icons = ["📊", "📢", "👤", "👁️", "🎯",  "⚡", "🎵", "⚙️", ]
+        self.menu_shortcuts = ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8",]
+        self.menus = ["系統狀況", "系统公告","帳號", "视觉辅助", "自动瞄准", "內核優化", "音樂中心", "设置中心", ]
         
         for i, text in enumerate(self.menus):
             # ⭐ 按钮文本添加图标和快捷键提示
@@ -2271,8 +2236,6 @@ class ModernModMenu(QWidget):
             # 根據不同的頁面名稱，呼叫對應的設定函式
             if text == "系統狀況":
                 self.setup_system_ui(layout)
-            elif text == "系統公告":
-                self.setup_system1_ui(layout)
             elif text == "自动瞄准":
                 self.setup_aimbot_ui(layout)
             elif text == "视觉辅助":
@@ -2281,10 +2244,6 @@ class ModernModMenu(QWidget):
                 self.setup_music_ui(layout)
             elif text == "设置中心":
                 self.setup_Setting_ui(layout)
-            elif text == "內存功能":
-                self.setup_Memoryfunction_ui(layout)
-            elif text == "移動":
-                self.setup_accelerate_ui(layout)
             elif text == "內核優化":
                 self.setup_kernel_optimization_ui(layout)
             elif text == "帳號":
@@ -2998,18 +2957,11 @@ class ModernModMenu(QWidget):
 
     def setup_aimbot_ui(self, layout):
         self.cb_cpu = QCheckBox(" 啟用CPU AI自瞄引擎")
-        self.cb_gpu = QCheckBox(" 啟用GPU AI自瞄引擎")
+        self.cb_gpu = QCheckBox(" 啟用追鎖")
         self.check_boxes = [self.cb_cpu, self.cb_gpu]
         for cb in self.check_boxes:
             cb.stateChanged.connect(self.on_aimbot_toggle)
             layout.addWidget(cb)
-
-
-        # 顯示追鎖
-        self.fov_tarck = QCheckBox(" 啟用追鎖")
-        self.fov_tarck.setChecked(True)
-        self.fov_tarck.stateChanged.connect(self.toggle_fov_enabled)
-        layout.addWidget(self.fov_tarck)
         
         # FOV 顯示開關（控制 overlay 上是否繪製 FOV 圈）自瞄功能開啟後才有意義
         self.fov_checkbox = QCheckBox(" 顯示 FOV 圈(自瞄)")
@@ -3105,7 +3057,7 @@ class ModernModMenu(QWidget):
         layout.addWidget(self.infer_interval_slider)
 
         # ========== 4. 最大移動調整 ==========
-        self.max_move_label = QLabel(f"最大移動: {self.aim_max_move}px", objectName="NormalText")
+        self.max_move_label = QLabel(f"死區: {self.aim_max_move}px", objectName="NormalText")
         self.max_move_slider = QSlider(Qt.Orientation.Horizontal)
         self.max_move_slider.setRange(10, 200)
         self.max_move_slider.setValue(self.aim_max_move)
@@ -3157,29 +3109,6 @@ class ModernModMenu(QWidget):
         self.confidence_slider.valueChanged.connect(self.on_confidence_changed)
         layout.addWidget(self.confidence_label)
         layout.addWidget(self.confidence_slider)
-
-        # ========== GPU 預熱狀態按鈕 ==========
-        self.gpu_warmup_btn = QPushButton("⏳ GPU 預熱中")
-        self.gpu_warmup_btn.setMinimumHeight(40)
-        self.gpu_warmup_btn.setEnabled(False)  # 初始為禁用狀態
-        self.gpu_warmup_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #6366F1;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-weight: bold;
-                font-size: 13px;
-                padding: 8px 16px;
-            }
-            QPushButton:disabled {
-                background-color: #6366F1;
-                color: white;
-                opacity: 0.7;
-            }
-        """)
-        layout.addWidget(self.gpu_warmup_btn)
-
         # ========== 配置按鈕 ==========
         config_btn_layout = QHBoxLayout()
         config_btn_layout.setSpacing(10)
@@ -3781,178 +3710,6 @@ class ModernModMenu(QWidget):
             self.cb_Screenrecordingprotection.stateChanged.connect(self.set_screen_protection_enabled)
         except Exception:
             pass
-
-    def setup_Memoryfunction_ui(self, layout):
-        layout.addWidget(QLabel("內存功能 (開發中)...", objectName="NormalText"))
-
-        # --- 1. 核取方塊部分 ---
-        self.cb_scope = QCheckBox(" 範圍 "); layout.addWidget(self.cb_scope)
-        self.cb_HOOKscope = QCheckBox(" HOOK範圍"); layout.addWidget(self.cb_HOOKscope)
-        self.cb_HOOKbigscope = QCheckBox(" HOOK大範圍"); layout.addWidget(self.cb_HOOKbigscope)
-        self.cb_Nodamagereductionscope = QCheckBox(" 獨家不減傷範圍 "); layout.addWidget(self.cb_Nodamagereductionscope)
-
-        # --- 2. 基礎範圍拉桿 ---
-        self.memory_scope_label = QLabel("範圍: 0", objectName="NormalText")
-        self.memory_scope_slider = QSlider(Qt.Orientation.Horizontal)
-        self.memory_scope_slider.setRange(0, 100)
-        self.memory_scope_slider.setValue(0)
-        self.memory_scope_slider.valueChanged.connect(
-            lambda v: self.memory_scope_label.setText(f"範圍: {v}")
-        )
-
-        # --- 3. HOOK範圍拉桿 ---
-        self.memory_HOOKscope_label = QLabel("HOOK範圍: 0", objectName="NormalText")
-        self.memory_HOOKscope_slider = QSlider(Qt.Orientation.Horizontal)
-        self.memory_HOOKscope_slider.setRange(0, 100)
-        self.memory_HOOKscope_slider.setValue(0)
-        self.memory_HOOKscope_slider.valueChanged.connect(
-            lambda v: self.memory_HOOKscope_label.setText(f"HOOK範圍: {v}")
-        )
-
-        # --- 4. HOOK大範圍拉桿  ---
-        self.memory_HOOKbigscope_label = QLabel("HOOK大範圍: 0", objectName="NormalText")
-        self.memory_HOOKbigscope_slider = QSlider(Qt.Orientation.Horizontal)
-        self.memory_HOOKbigscope_slider.setRange(0, 100)
-        self.memory_HOOKbigscope_slider.setValue(0)
-        self.memory_HOOKbigscope_slider.valueChanged.connect(
-            lambda v: self.memory_HOOKbigscope_label.setText(f"HOOK大範圍: {v}")
-        )
-
-        # --- 4. 獨家不減傷範圍拉桿  ---
-        self.memory_Nodamagereductionscope_label = QLabel("獨家不減傷範圍: 0", objectName="NormalText")
-        self.memory_Nodamagereductionscope_slider = QSlider(Qt.Orientation.Horizontal)
-        self.memory_Nodamagereductionscope_slider.setRange(0, 100)
-        self.memory_Nodamagereductionscope_slider.setValue(0)
-        self.memory_Nodamagereductionscope_slider.valueChanged.connect(
-            lambda v: self.memory_Nodamagereductionscope_label.setText(f"獨家不減傷範圍: {v}")
-        )
-
-        # --- 5. 將所有元件加入佈局 ---
-        layout.addWidget(self.memory_scope_label)
-        layout.addWidget(self.memory_scope_slider)
-        
-        layout.addWidget(self.memory_HOOKscope_label)
-        layout.addWidget(self.memory_HOOKscope_slider)
-        
-        layout.addWidget(self.memory_HOOKbigscope_label)
-        layout.addWidget(self.memory_HOOKbigscope_slider)
-
-        layout.addWidget(self.memory_Nodamagereductionscope_label)
-        layout.addWidget(self.memory_Nodamagereductionscope_slider)
-        # 十字架顯示開關與實例
-        self.cb_show_crosshair = QCheckBox(" 顯示戰神十字架"); self.cb_show_crosshair.setChecked(False)
-        layout.addWidget(self.cb_show_crosshair)
-
-        # 使用全局 Overlay 顯示十字架（在螢幕中心）
-        try:
-            self.memory_crosshair_overlay = CrosshairOverlay(size=80)
-            self.memory_crosshair_overlay.set_visible(self.cb_show_crosshair.isChecked())
-            self.cb_show_crosshair.toggled.connect(lambda v: self.memory_crosshair_overlay.set_visible(v))
-
-            # 添加大小與粗細控制（滑桿）
-            self.crosshair_size_label = QLabel(f"十字架大小: {self.memory_crosshair_overlay.size}")
-            self.crosshair_size_label.setObjectName("NormalText")
-            self.crosshair_size_slider = QSlider(Qt.Orientation.Horizontal)
-            self.crosshair_size_slider.setRange(20, 600)
-            self.crosshair_size_slider.setValue(self.memory_crosshair_overlay.size)
-            self.crosshair_size_slider.valueChanged.connect(lambda val: [self.crosshair_size_label.setText(f"十字架大小: {val}"), self.memory_crosshair_overlay.set_size(val)])
-            layout.addWidget(self.crosshair_size_label)
-            layout.addWidget(self.crosshair_size_slider)
-
-            self.crosshair_thickness_label = QLabel(f"十字架粗細: {self.memory_crosshair_overlay.thickness}")
-            self.crosshair_thickness_label.setObjectName("NormalText")
-            self.crosshair_thickness_slider = QSlider(Qt.Orientation.Horizontal)
-            self.crosshair_thickness_slider.setRange(1, 20)
-            self.crosshair_thickness_slider.setValue(self.memory_crosshair_overlay.thickness)
-            self.crosshair_thickness_slider.valueChanged.connect(lambda val: [self.crosshair_thickness_label.setText(f"十字架粗細: {val}"), self.memory_crosshair_overlay.set_thickness(val)])
-            layout.addWidget(self.crosshair_thickness_label)
-            layout.addWidget(self.crosshair_thickness_slider)
-            # 旋轉控制
-            self.crosshair_rotation_label = QLabel(f"十字架旋轉: 0°")
-            self.crosshair_rotation_label.setObjectName("NormalText")
-            self.crosshair_rotation_slider = QSlider(Qt.Orientation.Horizontal)
-            self.crosshair_rotation_slider.setRange(0, 360)
-            self.crosshair_rotation_slider.setValue(0)
-            self.crosshair_rotation_slider.valueChanged.connect(lambda val: [self.crosshair_rotation_label.setText(f"十字架旋轉: {val}°"), self.memory_crosshair_overlay.set_rotation(val)])
-            layout.addWidget(self.crosshair_rotation_label)
-            layout.addWidget(self.crosshair_rotation_slider)
-            # 自動旋轉開關與速度
-            self.crosshair_autorotate_cb = QCheckBox(" 自動旋轉")
-            self.crosshair_autorotate_cb.setObjectName("NormalText")
-            self.crosshair_autorotate_cb.setChecked(False)
-            layout.addWidget(self.crosshair_autorotate_cb)
-
-            self.crosshair_speed_label = QLabel(f"旋轉速度: 90 °/s")
-            self.crosshair_speed_label.setObjectName("NormalText")
-            self.crosshair_speed_slider = QSlider(Qt.Orientation.Horizontal)
-            self.crosshair_speed_slider.setRange(1, 720)
-            self.crosshair_speed_slider.setValue(90)
-            self.crosshair_speed_slider.valueChanged.connect(lambda v: self.crosshair_speed_label.setText(f"旋轉速度: {v} °/s"))
-            layout.addWidget(self.crosshair_speed_label)
-            layout.addWidget(self.crosshair_speed_slider)
-
-            # 定時器：驅動自動旋轉
-            self._crosshair_rotate_interval = 30
-            self.crosshair_rotation_timer = QTimer(self)
-            self.crosshair_rotation_timer.setInterval(self._crosshair_rotate_interval)
-            def _rotate_step():
-                try:
-                    if not self.memory_crosshair_overlay or not self.memory_crosshair_overlay._visible:
-                        return
-                    speed_dps = self.crosshair_speed_slider.value()  # degrees per second
-                    delta = speed_dps * (self._crosshair_rotate_interval / 1000.0)
-                    curr = getattr(self.memory_crosshair_overlay, 'rotation', 0.0)
-                    new = (curr + delta) % 360.0
-                    self.memory_crosshair_overlay.set_rotation(new)
-                except Exception:
-                    pass
-            self.crosshair_rotation_timer.timeout.connect(_rotate_step)
-            # 绑定复选框控制定时器
-            self.crosshair_autorotate_cb.toggled.connect(lambda v: self.crosshair_rotation_timer.start() if v else self.crosshair_rotation_timer.stop())
-        except Exception:
-            self.memory_crosshair_overlay = None
-    def setup_accelerate_ui(self, layout):
-        layout.addWidget(QLabel("移動設置(開了沒用)：", objectName="NormalText"))
-        self.cb_SoulReturnsToItsPlace = QCheckBox(" 靈魂歸位 "); layout.addWidget(self.cb_SoulReturnsToItsPlace)
-
-        self.cb_Sevenpictures = QCheckBox(" 七圖防拉 "); layout.addWidget(self.cb_Sevenpictures)
-
-        self.cb_Fivepictures = QCheckBox(" 五圖防拉 "); layout.addWidget(self.cb_Fivepictures)
-
-        self.cb_accelerate = QCheckBox(" 加速 "); layout.addWidget(self.cb_accelerate)
-
-        self.cb_highjump = QCheckBox(" 高跳 "); layout.addWidget(self.cb_highjump)
-
-        self.cb_Longjump = QCheckBox(" 跳遠 "); layout.addWidget(self.cb_Longjump)
-
-        self.cb_Feitian = QCheckBox(" 飛天 "); layout.addWidget(self.cb_Feitian)
-
-         
-          # --- 4. 高跳拉桿  ---
-        self.memory_accelerate_label = QLabel("速度: 0", objectName="NormalText")
-        self.memory_accelerate_slider = QSlider(Qt.Orientation.Horizontal)
-        self.memory_accelerate_slider.setRange(0, 1000000)
-        self.memory_accelerate_slider.setValue(0)
-        self.memory_accelerate_slider.valueChanged.connect(
-            lambda v: self.memory_accelerate_label.setText(f"速度: {v}")
-        )
-
-         # --- 4. 高跳拉桿  ---
-        self.memory_highjump_label = QLabel("高跳高度: 0", objectName="NormalText")
-        self.memory_highjump_slider = QSlider(Qt.Orientation.Horizontal)
-        self.memory_highjump_slider.setRange(0, 1000000)
-        self.memory_highjump_slider.setValue(0)
-        self.memory_highjump_slider.valueChanged.connect(
-            lambda v: self.memory_highjump_label.setText(f"高跳高度: {v}")
-        )
-
-        # --- 5. 將所有元件加入佈局 ---
-        layout.addWidget(self.memory_highjump_label)
-        layout.addWidget(self.memory_highjump_slider)
-
-        layout.addWidget(self.memory_accelerate_label)
-        layout.addWidget(self.memory_accelerate_slider)
-    
     
     def setup_system_ui(self, layout):
         """設置系統狀況UI"""
@@ -4083,10 +3840,8 @@ class ModernModMenu(QWidget):
             "login_bg.png",  # 視覺輔助
             "login_bg.png",  # 自動瞄準
             "login_bg.png",  # 內存功能
-            "login_bg.png",  # 移動
             "login_bg.png",  # 音樂中心
             "login_bg.png",  # 設置中心
-            "login_bg.png",  # 關於我們
         ]
         
         if index < len(bg_images):
@@ -4450,44 +4205,6 @@ class MainController(QWidget):
                             pass
             except Exception:
                 pass
-# --- 4. 程式入口 ---
-# 主程式入口
-def perform_auto_update(download_url):
-    """靜默下載並透過批次檔自動替換目前的 EXE"""
-    new_filename = "ui_new_version.exe"
-    # 取得目前運行的檔案路徑
-    current_exe = os.path.abspath(sys.argv[0]) 
-    exe_name = os.path.basename(current_exe)
-    
-    try:
-        # 1. 下載新檔案
-        print(f"正在下載更新檔...")
-        response = requests.get(download_url, stream=True)
-        with open(new_filename, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
-        
-        # 2. 指令：等待主程式關閉 -> 刪除舊檔 -> 改名新檔 -> 啟動新檔 -> 自刪批次檔
-        bat_content = f"""
-        @echo off
-        timeout /t 2 /nobreak > nul
-        taskkill /f /im "{exe_name}" > nul 2>&1
-        del /f /q "{current_exe}"
-        ren "{new_filename}" "{exe_name}"
-        start "" "{current_exe}"
-        del "%~f0"
-        """.strip()
-        
-        with open("updater.bat", "w", encoding="cp950") as f:
-            f.write(bat_content)
-            
-        # 3. 啟動批次檔並立刻結束目前程式
-        subprocess.Popen(["updater.bat"], shell=True)
-        os._exit(0) # 強制退出
-        
-    except Exception as e:
-        QMessageBox.critical(None, "更新失敗", f"自動更新發生錯誤: {e}")
 
 # --- 程式入口 ---
 if __name__ == "__main__":
@@ -4505,22 +4222,6 @@ if __name__ == "__main__":
     # 2. 驗證成功後進入主程式
     if hasattr(login, 'is_authenticated') and login.is_authenticated:
         logging.info("✅ 用戶驗證成功")
-        
-        # 3. 雲端檢查更新
-        ver, url = check_cloud_update()
-        
-        if ver:
-            msg = QMessageBox()
-            msg.setWindowTitle("cyROG 系統更新")
-            msg.setText(f"🚀 發現新版本：{ver}")
-            msg.setInformativeText("是否執行自動更新並重新啟動？")
-            msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-            msg.setDefaultButton(QMessageBox.StandardButton.Yes)
-            
-            if msg.exec() == QMessageBox.StandardButton.Yes:
-                # 執行自動下載與替換
-                perform_auto_update(url)
-                sys.exit()
         
         # 4. 啟動主選單控制器
         try:
