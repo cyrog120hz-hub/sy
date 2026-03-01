@@ -562,7 +562,7 @@ class LoginWindow(QWidget):
             self.logo_label.setGraphicsEffect(glow)
             self.logo_label.setContentsMargins(30, 30, 30, 30)
         else:
-            self.logo_label.setText("LOGO")
+            self.logo_label.setText("XUANS")
             self.logo_label.setStyleSheet("font-size: 32px; font-weight: bold; color: #38BDF8;")
 
         self.logo_text = QLabel("困暄")
